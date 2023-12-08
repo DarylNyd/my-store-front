@@ -1,17 +1,18 @@
 "use client";
-import { useState, useEffect } from 'react';
-import Image from 'next/image';
-import { useParams } from 'next/navigation'
-import { getProduct } from '@/services/api/product.api.js';
+import { useState, useEffect } from "react";
+import Image from "next/image";
+import { useParams } from "next/navigation";
+import { getProduct } from "@/services/api/product.api.js";
 import BreadCrumb from "@/components/UI/Breadcrumb";
-import TitlePage from '@/components/UI/TitlePage';
+import TitlePage from "@/components/UI/TitlePage";
 import ProductFancyBox from "@/components/products/ProductFancyBox";
 import Loader from "@/components/UI/Loader";
 import Alert from "@/components/UI/Alert";
-import { getBase64 } from '../../../lib/base64';
+import { getBase64 } from "../../../lib/base64";
+import Button from "@/components/UI/Button";
+import Popup from "@/components/UI/Popup";
 
 export default function Page() {
-
     const { id } = useParams();
     const [selectedImage, setSelectedImage] = useState(null);
     const [placehodlerImage, setPlaceholderImage] = useState(null);
@@ -20,6 +21,7 @@ export default function Page() {
     const [slideIndex, setSlideIndex] = useState(0);
     const [showFancyBox, setShowFancyBox] = useState(false);
     const [error, setError] = useState(null);
+    const [showPopup, setShowPopup] = useState(false);
 
     useEffect(() => {
         const fetchProduct = async () => {
@@ -29,14 +31,12 @@ export default function Page() {
                 if (product) {
                     setProduct(product.data);
                 }
-            }
-            catch (err) {
-                setError(err)
-            }
-            finally {
+            } catch (err) {
+                setError(err);
+            } finally {
                 setLoading(false);
             }
-        }
+        };
         if (id) {
             fetchProduct();
         }
@@ -44,9 +44,11 @@ export default function Page() {
 
     useEffect(() => {
         const fetchPlaceholderImage = async () => {
-            const placeholder = await getBase64(`${process.env.NEXT_PUBLIC_BACKEND_URL}/${product.thumbnail}`);
+            const placeholder = await getBase64(
+                `${process.env.NEXT_PUBLIC_BACKEND_URL}/${product.thumbnail}`
+            );
             setPlaceholderImage(placeholder);
-        }
+        };
         if (product) {
             setSelectedImage(product.thumbnail);
             fetchPlaceholderImage();
@@ -56,43 +58,40 @@ export default function Page() {
     if (loading) return <Loader />;
 
     const goToNextSlide = () => {
-        setSelectedImage(slideIndex === 0 ? product.packshot : product.thumbnail);
+        setSelectedImage(
+            slideIndex === 0 ? product.packshot : product.thumbnail
+        );
         setSlideIndex(slideIndex === 0 ? 1 : 0);
-    }
+    };
 
     const goToPrevSlide = () => {
-        setSelectedImage(slideIndex === 0 ? product.packshot : product.thumbnail);
+        setSelectedImage(
+            slideIndex === 0 ? product.packshot : product.thumbnail
+        );
         setSlideIndex(slideIndex === 0 ? 1 : 0);
-    }
+    };
 
     return (
         <div className="container mx-auto py-12">
-            {
-                error && (
-                    <Alert message={error.message} type="error" />
-                )
-            }
-            {
-                !product && (
-                    <Alert message="No products found" type="error" />
-                )
-            }
-            {
-                showFancyBox && (
-                    <ProductFancyBox
-                        img={selectedImage}
-                        prevSlide={() => goToPrevSlide()}
-                        nextSlide={() => goToNextSlide()}
-                        close={() => { setShowFancyBox(false) }}
-                    />
-                )
-            }
+            {error && <Alert message={error.message} type="error" />}
+            {!product && <Alert message="No products found" type="error" />}
+            {showFancyBox && (
+                <ProductFancyBox
+                    img={selectedImage}
+                    prevSlide={() => goToPrevSlide()}
+                    nextSlide={() => goToNextSlide()}
+                    close={() => {
+                        setShowFancyBox(false);
+                    }}
+                />
+            )}
             <BreadCrumb current_page={product?.name} />
             <div className="flex">
                 <div className="thumbnail lg:flex-1">
                     <div
                         onClick={() => setShowFancyBox(true)}
-                        className="group/show w-4/5 h-[550px] overflow-hidden cursor-pointer">
+                        className="group/show w-4/5 h-[550px] overflow-hidden cursor-pointer"
+                    >
                         <Image
                             blurDataURL={placehodlerImage}
                             className="object-cover h-full w-full group-hover/show:scale-105 transition ease-in-out delay-150 z-1"
@@ -141,8 +140,22 @@ export default function Page() {
                 </div>
                 <div className="content lg:flex-1 p-6">
                     <TitlePage title={product.name} />
-                    <p className="mb-3 font-semibold text-lg">{product.price} €</p>
+                    <p className="mb-3 font-semibold text-lg">
+                        {product.price} €
+                    </p>
                     <p className="leading-7">{product.description}</p>
+                    <div className="flex mt-6">
+                        <Button
+                            text={"Je suis intéressé"}
+                            buttonAction={() => {
+                                setShowPopup(true);
+                            }}
+                        />
+                        <Popup
+                            isOpen={showPopup}
+                            onClose={() => setShowPopup(false)}
+                        />
+                    </div>
                 </div>
             </div>
         </div>
